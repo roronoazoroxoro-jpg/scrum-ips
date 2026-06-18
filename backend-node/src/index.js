@@ -133,7 +133,24 @@ async function asegurarSectorTodos() {
   }
 }
 
+async function asegurarTablaPermisoRoles() {
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS permiso_roles (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        rol VARCHAR(20) NOT NULL,
+        clave VARCHAR(50) NOT NULL,
+        activo TINYINT(1) NOT NULL DEFAULT 1,
+        UNIQUE KEY permiso_roles_rol_clave_key (rol, clave)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+  } catch (error) {
+    console.error('Error al asegurar tabla permiso_roles:', error.message);
+  }
+}
+
 app.listen(PORT, async () => {
+  await asegurarTablaPermisoRoles();
   await asegurarSectorTodos();
   console.log(`Servidor corriendo en el puerto ${PORT}`);
 });

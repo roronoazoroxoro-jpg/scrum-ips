@@ -31,8 +31,15 @@ export default function Login() {
       } else {
         navegar('/tablero');
       }
-    } catch {
-      setError('Email o contraseña incorrectos');
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 401) {
+        setError('Email o contraseña incorrectos');
+      } else if (!status) {
+        setError('No se pudo conectar con el servidor. Verificá que el backend esté activo.');
+      } else {
+        setError('Error del servidor al iniciar sesión. Contactá al administrador.');
+      }
     } finally {
       setCargando(false);
     }
