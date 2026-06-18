@@ -92,6 +92,16 @@ CREATE TABLE alertas_admin (
   CONSTRAINT fk_alertas_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Permisos por rol (requerido para login y panel de administración)
+
+CREATE TABLE permiso_roles (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  rol VARCHAR(20) NOT NULL,
+  clave VARCHAR(50) NOT NULL,
+  activo TINYINT(1) NOT NULL DEFAULT 1,
+  UNIQUE KEY permiso_roles_rol_clave_key (rol, clave)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Tablas de Auditoría Modular y Organizada
 
 CREATE TABLE auditoria_sesiones (
