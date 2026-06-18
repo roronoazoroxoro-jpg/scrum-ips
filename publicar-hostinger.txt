@@ -1,0 +1,7 @@
+PUBLICAR EN HOSTINGER
+
+1. git pull
+2. .\generar-deploy-zip.ps1
+3. Subir el ZIP del Escritorio al panel de Hostinger
+4. Reiniciar la app Node
+5. Probar login
