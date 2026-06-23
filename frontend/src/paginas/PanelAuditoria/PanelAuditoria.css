@@ -61,6 +61,10 @@
   flex-wrap: wrap;
 }
 
+.panel-auditoria__encabezado-tabla .menu-exportar {
+  margin-left: auto;
+}
+
 .panel-auditoria__contador-total {
   font-size: 0.85rem;
   color: var(--color-texto-secundario);

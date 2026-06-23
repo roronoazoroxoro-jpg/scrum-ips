@@ -1,8 +1,16 @@
 .estadisticas-usuarios {
   animation: fadeIn 0.4s ease-out;
 }
+.estadisticas-usuarios__encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
 .estadisticas-usuarios__titulo { font-family: var(--fuente-especial); font-size: 1.5rem; color: var(--azul-institucional); margin: 0 0 6px 0; }
-.estadisticas-usuarios__aclaracion { font-size: 0.82rem; color: var(--texto-gris); margin: 0 0 24px 0; }
+.estadisticas-usuarios__aclaracion { font-size: 0.82rem; color: var(--texto-gris); margin: 0; }
 .estadisticas-usuarios__vacio { text-align: center; color: var(--texto-gris); padding: 40px; font-size: 0.88rem; }
 
 /* ── Resumen global ── */

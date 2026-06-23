@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Search } from 'lucide-react';
 import type { HistorialMovimiento } from '../../tipos';
 import { listarHistorial } from '../../servicios/historial';
 import { formatearFechaHora } from '../../utilidades/formatoFecha';
 import Selector from '../../componentes/Selector/Selector';
+import MenuExportar from '../../componentes/MenuExportar/MenuExportar';
 import './HistorialTareas.css';
 
 const ETIQUETAS: Record<string, string> = {
@@ -63,13 +64,39 @@ export default function HistorialTareas() {
     return orden === 'reciente' ? fechaB - fechaA : fechaA - fechaB;
   });
 
+  const filasExportacion = useMemo(
+    () =>
+      movimientosOrdenados.map((m) => ({
+        tarea: m.tarea?.titulo ?? `#${m.tarea_id}`,
+        usuario: m.usuario ? `${m.usuario.nombre} ${m.usuario.apellido}` : '-',
+        estado: ETIQUETAS[m.estado_nuevo] ?? m.estado_nuevo,
+        fecha: formatearFechaHora(m.fecha_movimiento),
+      })),
+    [movimientosOrdenados]
+  );
+
   return (
     <div className="historial-tareas pagina pagina--centrada">
       <Link to="/admin" className="btn-volver">
         <ArrowLeft size={18} />
         Volver al Panel Admin
       </Link>
-      <h1 className="historial-tareas__titulo">Historial de tareas</h1>
+      <div className="historial-tareas__encabezado">
+        <h1 className="historial-tareas__titulo">Historial de tareas</h1>
+        <MenuExportar
+          opciones={{
+            titulo: 'Historial de tareas - Scrum IPS',
+            nombreArchivo: 'historial-tareas',
+            columnas: [
+              { encabezado: 'Tarea', clave: 'tarea' },
+              { encabezado: 'Usuario', clave: 'usuario' },
+              { encabezado: 'Estado', clave: 'estado' },
+              { encabezado: 'Fecha', clave: 'fecha' },
+            ],
+            filas: filasExportacion,
+          }}
+        />
+      </div>
 
       {/* Controles de Búsqueda, Filtros y Ordenamiento */}
       <div className="historial-tareas__filtros-caja">

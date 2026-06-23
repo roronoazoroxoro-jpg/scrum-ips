@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, TrendingUp, Clock, Zap, CheckCircle, Loader, AlertTriangle } from 'lucide-react';
 import type { KpisUsuario } from '../../tipos';
 import { obtenerKpisUsuarios } from '../../servicios/estadisticas';
+import MenuExportar from '../../componentes/MenuExportar/MenuExportar';
 import './EstadisticasUsuarios.css';
 
 function formatHoras(h: number | null): string {
@@ -182,6 +183,25 @@ export default function EstadisticasUsuarios() {
     return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
   })();
 
+  const filasExportacion = useMemo(
+    () =>
+      usuarios.map((u, i) => ({
+        ranking: String(i + 1),
+        nombre: `${u.nombre} ${u.apellido}`,
+        puntos: String(u.puntos),
+        finalizadas: String(u.tareas_finalizadas),
+        en_proceso: String(u.tareas_en_proceso),
+        pendientes: String(u.tareas_por_hacer),
+        prom_respuesta: formatHoras(u.promedio_respuesta_horas),
+        prom_resolucion: formatHoras(u.promedio_resolucion_horas),
+        alta: String(u.tareas_alta),
+        media: String(u.tareas_media),
+        baja: String(u.tareas_baja),
+        pct_alta: `${u.pct_alta}%`,
+      })),
+    [usuarios]
+  );
+
   return (
     <div className="estadisticas-usuarios pagina pagina--centrada">
       <Link to="/admin" className="btn-volver">
@@ -189,8 +209,34 @@ export default function EstadisticasUsuarios() {
         Volver al Panel Admin
       </Link>
 
-      <h1 className="estadisticas-usuarios__titulo">Panel de estadísticas</h1>
-      <p className="estadisticas-usuarios__aclaracion">KPIs por usuario · Puntos: Alta = 3, Media = 2, Baja = 1</p>
+      <div className="estadisticas-usuarios__encabezado">
+        <div>
+          <h1 className="estadisticas-usuarios__titulo">Panel de estadísticas</h1>
+          <p className="estadisticas-usuarios__aclaracion">KPIs por usuario · Puntos: Alta = 3, Media = 2, Baja = 1</p>
+        </div>
+        <MenuExportar
+          opciones={{
+            titulo: 'Estadísticas de usuarios - Scrum IPS',
+            nombreArchivo: 'estadisticas-usuarios',
+            columnas: [
+              { encabezado: '#', clave: 'ranking' },
+              { encabezado: 'Usuario', clave: 'nombre' },
+              { encabezado: 'Puntos', clave: 'puntos' },
+              { encabezado: 'Finalizadas', clave: 'finalizadas' },
+              { encabezado: 'En proceso', clave: 'en_proceso' },
+              { encabezado: 'Pendientes', clave: 'pendientes' },
+              { encabezado: 'Prom. respuesta', clave: 'prom_respuesta' },
+              { encabezado: 'Prom. resolución', clave: 'prom_resolucion' },
+              { encabezado: 'Alta', clave: 'alta' },
+              { encabezado: 'Media', clave: 'media' },
+              { encabezado: 'Baja', clave: 'baja' },
+              { encabezado: '% alta', clave: 'pct_alta' },
+            ],
+            filas: filasExportacion,
+          }}
+          deshabilitado={cargando}
+        />
+      </div>
 
       {cargando ? (
         <p className="estadisticas-usuarios__vacio">Cargando...</p>

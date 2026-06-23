@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { ShieldAlert, Users, Layers, Building2, CheckSquare, Monitor, FolderKanban, ArrowLeft, X } from 'lucide-react';
 import api from '../../servicios/api';
+import MenuExportar from '../../componentes/MenuExportar/MenuExportar';
 import './PanelAuditoria.css';
 
 interface RegistroAuditoria {
@@ -77,6 +78,52 @@ export default function PanelAuditoria() {
     }
   }
 
+  function registroAFila(reg: RegistroAuditoria) {
+    return {
+      fecha: formatearFecha(reg?.fecha_creacion),
+      usuario: reg?.usuario
+        ? `${reg.usuario.nombre || ''} ${reg.usuario.apellido || ''}`.trim()
+        : (reg?.email || 'Desconocido'),
+      email: reg?.email || 'N/A',
+      accion: reg?.accion || 'Desconocida',
+      ip: reg?.ip || 'N/A',
+      estado: String(reg?.estado_codigo ?? ''),
+      detalles: reg?.detalles && reg.detalles !== '{}' ? reg.detalles : 'Sin detalles',
+    };
+  }
+
+  const columnasAuditoria = useMemo(
+    () => [
+      { encabezado: 'Fecha y Hora', clave: 'fecha' },
+      { encabezado: 'Usuario', clave: 'usuario' },
+      { encabezado: 'Email', clave: 'email' },
+      { encabezado: 'Acción', clave: 'accion' },
+      { encabezado: 'IP', clave: 'ip' },
+      { encabezado: 'Estado HTTP', clave: 'estado' },
+      { encabezado: 'Detalles', clave: 'detalles' },
+    ],
+    []
+  );
+
+  const filasExportacion = useMemo(
+    () => registros.map(registroAFila),
+    [registros]
+  );
+
+  const exportarTodosRegistros = useCallback(async () => {
+    if (!seccionSeleccionada) return [];
+    const todos: RegistroAuditoria[] = [];
+    let paginaActual = 1;
+    let paginas = 1;
+    while (paginaActual <= paginas) {
+      const res = await api.get(`/auditoria?tipo=${seccionSeleccionada}&pagina=${paginaActual}&limite=100`);
+      todos.push(...(Array.isArray(res.data.registros) ? res.data.registros : []));
+      paginas = res.data.paginas_totales || 1;
+      paginaActual += 1;
+    }
+    return todos.map(registroAFila);
+  }, [seccionSeleccionada]);
+
   function mostrarDetalles(detallesJson: string) {
     try {
       const parseado = JSON.parse(detallesJson);
@@ -128,6 +175,16 @@ export default function PanelAuditoria() {
         {totalRegistros > 0 && (
           <span className="panel-auditoria__contador-total">{totalRegistros} registros</span>
         )}
+        <MenuExportar
+          opciones={{
+            titulo: `Auditoría ${seccion?.titulo ?? ''} - Scrum IPS`,
+            nombreArchivo: `auditoria-${seccionSeleccionada}`,
+            columnas: columnasAuditoria,
+            filas: filasExportacion,
+          }}
+          deshabilitado={cargando || !!error}
+          alExportarTodos={exportarTodosRegistros}
+        />
       </div>
 
       {error && (

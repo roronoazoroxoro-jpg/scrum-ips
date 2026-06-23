@@ -1,11 +1,19 @@
 .historial-tareas {
   animation: fadeIn 0.4s ease-out;
 }
+.historial-tareas__encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
 .historial-tareas__titulo { 
   font-family: var(--fuente-especial); 
   font-size: 1.5rem; 
   color: var(--azul-institucional); 
-  margin: 0 0 20px 0; 
+  margin: 0;
 }
 
 /* Caja de Filtros y Búsqueda */
