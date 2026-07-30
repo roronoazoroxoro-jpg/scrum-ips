@@ -125,6 +125,19 @@ router.post('/solicitud', async (req, res) => {
   return res.status(201).json({ ok: true, id: tarea.id });
 });
 
+const ESTADO_LEGIBLE = {
+  por_hacer: 'Por hacer',
+  en_proceso: 'En proceso',
+  pendiente: 'Pendiente',
+  finalizada: 'Finalizada',
+};
+
+function dniConsultaValido(raw) {
+  const dni = normalizarDni(raw ?? '');
+  if (!dni || dni.length < 7 || dni.length > 8) return null;
+  return dni;
+}
+
 // GET /api/publico/solicitud/:id/valoracion
 router.get('/solicitud/:id/valoracion', async (req, res) => {
   const id = parseInt(req.params.id, 10);
@@ -132,12 +145,22 @@ router.get('/solicitud/:id/valoracion', async (req, res) => {
     return res.status(400).json({ detail: 'Número de solicitud inválido' });
   }
 
+  const dniQuery = dniConsultaValido(req.query.dni);
+  if (!dniQuery) {
+    return res.status(400).json({ detail: 'Ingresá el DNI con el que cargaste la solicitud' });
+  }
+
   const tarea = await prisma.tarea.findUnique({
     where: { id },
     select: {
       id: true,
+      titulo: true,
       estado: true,
       activo: true,
+      dni_contacto: true,
+      fecha_creacion: true,
+      fecha_inicio: true,
+      fecha_finalizacion: true,
       valoracion_solicitante: true,
       comentario_solicitante: true,
       fecha_valoracion: true,
@@ -148,12 +171,21 @@ router.get('/solicitud/:id/valoracion', async (req, res) => {
     return res.status(404).json({ detail: 'Solicitud no encontrada' });
   }
 
+  if (!tarea.dni_contacto || tarea.dni_contacto !== dniQuery) {
+    return res.status(403).json({ detail: 'El DNI no coincide con esta solicitud' });
+  }
+
   const yaValorada = tarea.valoracion_solicitante != null;
   const puedeValorar = tarea.estado === 'finalizada' && !yaValorada;
 
   return res.json({
     id: tarea.id,
+    titulo: tarea.titulo,
     estado: tarea.estado,
+    estado_legible: ESTADO_LEGIBLE[tarea.estado] || tarea.estado,
+    fecha_creacion: tarea.fecha_creacion ? String(tarea.fecha_creacion) : null,
+    fecha_inicio: tarea.fecha_inicio ? String(tarea.fecha_inicio) : null,
+    fecha_finalizacion: tarea.fecha_finalizacion ? String(tarea.fecha_finalizacion) : null,
     puede_valorar: puedeValorar,
     ya_valorada: yaValorada,
     puntuacion: tarea.valoracion_solicitante,
@@ -165,10 +197,15 @@ router.get('/solicitud/:id/valoracion', async (req, res) => {
 // POST /api/publico/solicitud/:id/valoracion
 router.post('/solicitud/:id/valoracion', async (req, res) => {
   const id = parseInt(req.params.id, 10);
-  const { puntuacion, comentario } = req.body;
+  const { puntuacion, comentario, dni_contacto } = req.body;
 
   if (Number.isNaN(id)) {
     return res.status(400).json({ detail: 'Número de solicitud inválido' });
+  }
+
+  const dniBody = dniConsultaValido(dni_contacto);
+  if (!dniBody) {
+    return res.status(400).json({ detail: 'Ingresá el DNI con el que cargaste la solicitud' });
   }
 
   const puntos = parseInt(puntuacion, 10);
@@ -179,6 +216,9 @@ router.post('/solicitud/:id/valoracion', async (req, res) => {
   const tarea = await prisma.tarea.findUnique({ where: { id } });
   if (!tarea || !tarea.activo) {
     return res.status(404).json({ detail: 'Solicitud no encontrada' });
+  }
+  if (!tarea.dni_contacto || tarea.dni_contacto !== dniBody) {
+    return res.status(403).json({ detail: 'El DNI no coincide con esta solicitud' });
   }
   if (tarea.valoracion_solicitante != null) {
     return res.status(409).json({ detail: 'Esta solicitud ya fue valorada' });

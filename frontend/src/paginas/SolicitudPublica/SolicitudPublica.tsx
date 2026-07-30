@@ -46,9 +46,11 @@ export default function SolicitudPublica() {
   const [enviado, setEnviado] = useState(false);
   const [error, setError] = useState('');
 
-  const [mostrarBuscarValoracion, setMostrarBuscarValoracion] = useState(false);
-  const [idBuscarValoracion, setIdBuscarValoracion] = useState('');
-  const [idValoracionActiva, setIdValoracionActiva] = useState<number | null>(null);
+  const [mostrarBuscarSeguimiento, setMostrarBuscarSeguimiento] = useState(false);
+  const [idBuscarSeguimiento, setIdBuscarSeguimiento] = useState('');
+  const [dniBuscarSeguimiento, setDniBuscarSeguimiento] = useState('');
+  const [idSeguimientoActivo, setIdSeguimientoActivo] = useState<number | null>(null);
+  const [dniSeguimientoActivo, setDniSeguimientoActivo] = useState('');
 
   useEffect(() => {
     apiPublica.get<Sede[]>('/publico/sedes').then(r => setSedes(r.data));
@@ -142,19 +144,27 @@ export default function SolicitudPublica() {
     setRustdeskPassword('');
     setTareaIdCreada(null);
     setEnviado(false); setError('');
-    setMostrarBuscarValoracion(false);
-    setIdBuscarValoracion('');
-    setIdValoracionActiva(null);
+    setMostrarBuscarSeguimiento(false);
+    setIdBuscarSeguimiento('');
+    setDniBuscarSeguimiento('');
+    setIdSeguimientoActivo(null);
+    setDniSeguimientoActivo('');
   }
 
-  function buscarValoracion() {
-    const id = parseInt(idBuscarValoracion, 10);
+  function buscarSeguimiento() {
+    const id = parseInt(idBuscarSeguimiento, 10);
+    const dniLimpio = dniBuscarSeguimiento.replace(/\D/g, '');
     if (Number.isNaN(id) || id < 1) {
       setError('Ingresá un número de solicitud válido.');
       return;
     }
+    if (dniLimpio.length < 7 || dniLimpio.length > 8) {
+      setError('Ingresá el DNI con el que cargaste la solicitud (7 u 8 dígitos).');
+      return;
+    }
     setError('');
-    setIdValoracionActiva(id);
+    setIdSeguimientoActivo(id);
+    setDniSeguimientoActivo(dniLimpio);
   }
 
   if (enviado) {
@@ -169,12 +179,12 @@ export default function SolicitudPublica() {
             </p>
           )}
           <p className="sp-exito-texto">
-            El equipo de sistemas recibió tu solicitud y la va a atender a la brevedad.
-            Guardá este número para valorar la atención cuando esté resuelta.
+            El equipo de informática recibió tu solicitud y la va a atender a la brevedad.
+            Guardá este número y tu DNI para consultar el estado cuando quieras.
           </p>
 
           {tareaIdCreada !== null && (
-            <ValoracionSolicitud solicitudId={tareaIdCreada} />
+            <ValoracionSolicitud solicitudId={tareaIdCreada} dni={dni} />
           )}
 
           <button className="sp-btn sp-btn--secundario" onClick={reiniciar}>
@@ -445,15 +455,18 @@ export default function SolicitudPublica() {
               type="button"
               className="sp-valoracion-buscar__toggle"
               onClick={() => {
-                setMostrarBuscarValoracion(v => !v);
-                setIdValoracionActiva(null);
+                setMostrarBuscarSeguimiento(v => !v);
+                setIdSeguimientoActivo(null);
+                setDniSeguimientoActivo('');
                 setError('');
               }}
             >
-              {mostrarBuscarValoracion ? 'Ocultar valoración' : '¿Ya resolvieron tu pedido? Valorá con tu número'}
+              {mostrarBuscarSeguimiento
+                ? 'Ocultar seguimiento'
+                : 'Consultá el estado de tu solicitud'}
             </button>
 
-            {mostrarBuscarValoracion && (
+            {mostrarBuscarSeguimiento && (
               <div className="sp-valoracion-buscar__form">
                 <div className="sp-valoracion-buscar__fila">
                   <div className="sp-campo">
@@ -466,16 +479,34 @@ export default function SolicitudPublica() {
                       type="number"
                       min={1}
                       placeholder="Ej: 165"
-                      value={idBuscarValoracion}
-                      onChange={e => setIdBuscarValoracion(e.target.value)}
+                      value={idBuscarSeguimiento}
+                      onChange={e => setIdBuscarSeguimiento(e.target.value)}
                     />
                   </div>
-                  <button type="button" className="sp-btn sp-btn--secundario" onClick={buscarValoracion}>
+                  <div className="sp-campo">
+                    <label className="sp-etiqueta" htmlFor="sp-buscar-dni">
+                      DNI
+                    </label>
+                    <input
+                      id="sp-buscar-dni"
+                      className="sp-input"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="Sin puntos"
+                      value={dniBuscarSeguimiento}
+                      onChange={e => setDniBuscarSeguimiento(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                    />
+                  </div>
+                  <button type="button" className="sp-btn sp-btn--secundario" onClick={buscarSeguimiento}>
                     Buscar
                   </button>
                 </div>
-                {idValoracionActiva !== null && (
-                  <ValoracionSolicitud solicitudId={idValoracionActiva} compacto />
+                {idSeguimientoActivo !== null && dniSeguimientoActivo && (
+                  <ValoracionSolicitud
+                    solicitudId={idSeguimientoActivo}
+                    dni={dniSeguimientoActivo}
+                    compacto
+                  />
                 )}
               </div>
             )}
